@@ -1,0 +1,5 @@
+transformers
+openpyxl
+flake8
+pytest
+re

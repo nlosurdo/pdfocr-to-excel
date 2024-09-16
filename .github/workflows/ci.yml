@@ -1,0 +1,51 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Checkout the repository
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # Set up Docker Buildx for building Docker images
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    # Log in to Amazon ECR
+    - name: Log in to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+      with:
+        region: eu-north-1
+
+    # Build the Docker image
+    - name: Build the Docker image
+      run: docker build -t pdfocr-to-excel:latest .
+
+    # Tag the Docker image with the AWS ECR repository
+    - name: Tag Docker image for AWS ECR
+      run: docker tag pdfocr-to-excel:latest 345594574734.dkr.ecr.eu-north-1.amazonaws.com/git-hub/sca-holding:latest
+
+    # Push the Docker image to AWS ECR
+    - name: Push Docker image to AWS ECR
+      run: docker push 345594574734.dkr.ecr.eu-north-1.amazonaws.com/git-hub/sca-holding:latest
+
+    # Run flake8 to lint the code
+    - name: Lint code with flake8
+      run: |
+        docker run --rm pdfocr-to-excel:latest flake8 .
+
+    # Run tests with pytest
+    - name: Test with pytest
+      run: |
+        docker run --rm pdfocr-to-excel:latest pytest
